@@ -1,5 +1,9 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api import (
     admin,
@@ -29,6 +33,8 @@ with SessionLocal() as db:
     seed_if_empty(db)
 
 app = FastAPI(title=settings.app_name)
+STATIC_DIR = Path(__file__).parent / "static"
+ASSETS_DIR = STATIC_DIR / "assets"
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,7 +45,7 @@ app.add_middleware(
 )
 
 
-@app.get("/")
+@app.get("/health")
 def healthcheck():
     return {"status": "ok", "service": settings.app_name}
 
@@ -60,3 +66,24 @@ app.include_router(hospitals.router)
 app.include_router(feedback.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
+
+
+if ASSETS_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
+
+
+def _index_response():
+    index_file = STATIC_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    return JSONResponse({"status": "ok", "service": settings.app_name})
+
+
+@app.get("/")
+def root():
+    return _index_response()
+
+
+@app.get("/{full_path:path}")
+def spa_fallback(full_path: str):
+    return _index_response()

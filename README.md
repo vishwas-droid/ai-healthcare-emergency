@@ -42,6 +42,20 @@ AI service runs at `http://127.0.0.1:8010`
 - Email: `admin@medai.com`
 - Password: `admin123`
 
+## Single URL Setup (Backend serves Frontend)
+To serve the frontend from the same backend URL, build the frontend and copy the dist output into `backend/app/static`:
+```bash
+cd frontend
+npm install
+npm run build
+rm -rf ../backend/app/static/*
+cp -R dist/* ../backend/app/static/
+```
+Then commit and redeploy the backend. The site will be available at the backend URL:
+```
+https://<backend-service>.onrender.com/
+```
+
 ## Run Frontend
 ```bash
 cd frontend
