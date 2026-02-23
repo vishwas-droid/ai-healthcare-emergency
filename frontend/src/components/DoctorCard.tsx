@@ -6,21 +6,22 @@ type Props = {
   doctor: Doctor;
   onTrack?: (doctor: Doctor) => void;
   onBook?: (doctor: Doctor) => void;
+  onWhy?: (doctor: Doctor) => void;
 };
 
-export function DoctorCard({ doctor, onTrack, onBook }: Props) {
+export function DoctorCard({ doctor, onTrack, onBook, onWhy }: Props) {
   const whatsappHref = doctor.whatsapp_link || "https://wa.me/919800088108";
   const callHref = doctor.phone_number ? `tel:${doctor.phone_number}` : "tel:+919800088108";
   return (
-    <article className="rounded-2xl bg-white p-5 shadow-premium">
+    <article className="rounded-2xl bg-surface p-5 shadow-premium">
       <div className="flex items-start gap-4">
         <img src={doctor.photo_url} alt={doctor.name} className="h-20 w-20 rounded-xl object-cover" />
         <div className="flex-1">
           <h3 className="text-xl font-bold">{doctor.name}</h3>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted">
             {doctor.category} | {doctor.qualification}
           </p>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted">
             {doctor.college} | {doctor.city}
           </p>
           <div className="mt-2 flex flex-wrap gap-2 text-xs">
@@ -29,17 +30,20 @@ export function DoctorCard({ doctor, onTrack, onBook }: Props) {
               <span className="rounded-full bg-emerald-100 px-2 py-1 font-semibold text-emerald-700">Verified</span>
             )}
             <span className="rounded-full bg-slate-100 px-2 py-1">{doctor.availability_status}</span>
+            <span className={`rounded-full px-2 py-1 ${doctor.is_available ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-muted"}`}>
+              {doctor.is_available ? "Available" : "Busy"}
+            </span>
           </div>
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-slate-700">
+      <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-muted">
         <p>Experience: {doctor.experience_years} yrs</p>
         <p>
           Rating: {doctor.rating} ({doctor.reviews_count})
         </p>
         <p>Fee: INR {doctor.consultation_fee}</p>
         <p>Response: {doctor.response_time_minutes} min</p>
-        <p>Patients: {doctor.total_patients_served}</p>
+        <p>Success: {doctor.success_rate}%</p>
         <p>Languages: {doctor.languages}</p>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
@@ -51,12 +55,19 @@ export function DoctorCard({ doctor, onTrack, onBook }: Props) {
           WhatsApp Direct
         </a>
         <a href={callHref} className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white">Call</a>
-        <button onClick={() => onBook?.(doctor)} className="rounded-lg bg-primary px-3 py-2 text-sm text-white">
-          Book Appointment
-        </button>
+        {onBook && (
+          <button onClick={() => onBook(doctor)} className="rounded-lg bg-primary px-3 py-2 text-sm text-white">
+            Book Appointment
+          </button>
+        )}
         {onTrack && (
           <button onClick={() => onTrack(doctor)} className="rounded-lg border border-primary px-3 py-2 text-sm text-primary">
             Track Doctor
+          </button>
+        )}
+        {onWhy && (
+          <button onClick={() => onWhy(doctor)} className="rounded-lg border px-3 py-2 text-sm">
+            Why AI Recommended
           </button>
         )}
       </div>

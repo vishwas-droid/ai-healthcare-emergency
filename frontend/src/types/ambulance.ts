@@ -5,6 +5,7 @@ export type Ambulance = {
   state: string;
   vehicle_type: string;
   response_time_minutes: number;
+  response_time_seconds: number;
   cost_per_km: number;
   base_price: number;
   availability_status: string;
@@ -15,4 +16,11 @@ export type Ambulance = {
   phone_number: string;
   whatsapp_link: string;
   ai_score: number;
+  driver_score: number;
+  has_icu: boolean;
+  has_oxygen: boolean;
+  has_ventilator: boolean;
+  is_available: boolean;
+  latitude: number;
+  longitude: number;
 };

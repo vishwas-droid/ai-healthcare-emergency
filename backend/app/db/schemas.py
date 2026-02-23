@@ -19,12 +19,18 @@ class DoctorOut(BaseModel):
     consultation_fee: float
     total_patients_served: int
     response_time_minutes: int
+    response_time_seconds: int = 0
     verified_status: bool
     availability_status: str
+    is_available: bool = True
     languages: str
     whatsapp_link: str
     phone_number: str
     ai_score: float
+    rating_count: int = 0
+    success_rate: float = 85.0
+    latitude: float = 0.0
+    longitude: float = 0.0
 
     class Config:
         from_attributes = True
@@ -47,6 +53,14 @@ class AmbulanceOut(BaseModel):
     phone_number: str
     whatsapp_link: str
     ai_score: float
+    driver_score: float = 85.0
+    has_icu: bool = False
+    has_oxygen: bool = True
+    has_ventilator: bool = False
+    response_time_seconds: int = 0
+    is_available: bool = True
+    latitude: float = 0.0
+    longitude: float = 0.0
 
     class Config:
         from_attributes = True
@@ -84,6 +98,153 @@ class EmergencyRecommendResponse(BaseModel):
     final_recommendation: str
     compared_doctors: int = 0
     compared_ambulances: int = 0
+
+
+class TriageRequest(BaseModel):
+    complaint_text: str = Field(min_length=3)
+    location_city: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    user_id: str | None = None
+
+
+class TriageResponse(BaseModel):
+    emergency_id: str
+    severity: str
+    severity_score: int
+    emergency_type: str
+    entities: dict
+    recommended: dict
+    risk_flags: list[str]
+    escalation: dict
+    confidence: float
+
+
+class RankingRequest(BaseModel):
+    emergency_id: str
+    budget: float = Field(ge=0)
+    severity: str
+    location_city: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    max_results: int = Field(default=20, ge=1, le=100)
+
+
+class RankingExplainResponse(BaseModel):
+    target_id: int
+    target_type: str
+    score_total: float
+    breakdown: dict
+    why_ranked_1: str | None = None
+
+
+class DoctorRankingResponse(BaseModel):
+    doctors: list[DoctorOut]
+    explanations: list[RankingExplainResponse]
+
+
+class AmbulanceRankingResponse(BaseModel):
+    ambulances: list[AmbulanceOut]
+    explanations: list[RankingExplainResponse]
+
+
+class HospitalOut(BaseModel):
+    id: int
+    name: str
+    city: str
+    state: str
+    country: str
+    icu_beds_available: int
+    emergency_wait_minutes: int
+    success_rate: float
+    avg_cost_index: float
+    distance_km_estimate: float
+    latitude: float
+    longitude: float
+    phone_number: str
+    is_available: bool
+    ai_score: float = 0.0
+
+    class Config:
+        from_attributes = True
+
+
+class HospitalRankingResponse(BaseModel):
+    hospitals: list[HospitalOut]
+    explanations: list[RankingExplainResponse]
+
+
+class DispatchRequest(BaseModel):
+    emergency_id: str
+    doctor_id: int | None = None
+    ambulance_id: int | None = None
+    hospital_id: int | None = None
+    mode: str | None = None  # FASTEST / CHEAPEST / CRITICAL_CARE
+
+
+class DispatchResponse(BaseModel):
+    emergency_id: str
+    assignment_id: str
+    status: str
+    eta_seconds: int
+    tracking_id: int
+
+
+class TrackingRealtimeUpdate(BaseModel):
+    tracking_id: int
+    status: str
+    eta_seconds: int
+    progress_percent: float
+    location: dict
+    updated_at: datetime
+
+
+class AnalyticsForecastResponse(BaseModel):
+    peak_hours: list[dict]
+    cardiac_spike_probability: list[dict]
+    demand_forecast: list[dict]
+    high_risk_zones: list[dict]
+
+
+class FeedbackRequest(BaseModel):
+    emergency_id: str
+    outcome: str
+    response_time_seconds: int
+    satisfaction_score: int = Field(ge=1, le=10)
+    survival: bool | None = None
+    notes: str | None = None
+
+
+class UserOut(BaseModel):
+    id: str
+    role: str
+    full_name: str
+    email: str
+    phone: str
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AuthRegisterRequest(BaseModel):
+    full_name: str
+    email: str
+    phone: str | None = None
+    password: str = Field(min_length=6)
+    role: str = \"PATIENT\"
+
+
+class AuthLoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = \"bearer\"
+    user: UserOut
 
 
 class AnalyticsResponse(BaseModel):

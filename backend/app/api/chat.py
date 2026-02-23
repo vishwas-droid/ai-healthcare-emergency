@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisco
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.security import decrypt_text, encrypt_text
 from app.db.models import ChatMessage, ChatSession, Doctor
 from app.db.schemas import (
     ChatMessageCreate,
@@ -53,7 +54,10 @@ def get_chat_messages(session_id: int, db: Session = Depends(get_db)):
     chat = db.get(ChatSession, session_id)
     if not chat:
         raise HTTPException(status_code=404, detail="Session not found")
-    return db.scalars(select(ChatMessage).where(ChatMessage.session_id == session_id).order_by(ChatMessage.created_at)).all()
+    messages = db.scalars(select(ChatMessage).where(ChatMessage.session_id == session_id).order_by(ChatMessage.created_at)).all()
+    for msg in messages:
+        msg.message = decrypt_text(msg.message) or msg.message
+    return messages
 
 
 @router.post("/chat/{session_id}/message", response_model=ChatMessageOut)
@@ -65,7 +69,7 @@ def send_message(session_id: int, payload: ChatMessageCreate, db: Session = Depe
     msg = ChatMessage(
         session_id=session_id,
         sender_type=payload.sender_type,
-        message=payload.message,
+        message=encrypt_text(payload.message) or payload.message,
         file_url=payload.file_url,
     )
     chat.last_message_at = datetime.utcnow()

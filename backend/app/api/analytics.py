@@ -3,8 +3,9 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models import Ambulance, Doctor, SearchEvent
-from app.db.schemas import AnalyticsResponse
+from app.db.schemas import AnalyticsForecastResponse, AnalyticsResponse
 from app.db.session import get_db
+from app.services.analytics_engine import forecast
 
 router = APIRouter(prefix="", tags=["Analytics"])
 
@@ -59,3 +60,9 @@ def get_analytics(db: Session = Depends(get_db)):
         demand_category_analysis=demand_problem,
         demand_by_city=demand_city,
     )
+
+
+@router.get("/analytics/forecast", response_model=AnalyticsForecastResponse)
+def get_forecast(db: Session = Depends(get_db)):
+    data = forecast(db)
+    return AnalyticsForecastResponse(**data)

@@ -4,10 +4,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#E11D48",
+        primary: "var(--primary)",
+        accent: "var(--accent)",
+        surface: "var(--surface)",
+        ink: "var(--text)",
+        muted: "var(--muted)",
       },
       boxShadow: {
-        premium: "0 8px 30px rgba(0,0,0,0.08)",
+        premium: "0 18px 50px rgba(15, 23, 42, 0.12)",
+        glow: "0 0 40px rgba(225, 29, 72, 0.25)",
       },
     },
   },

@@ -23,13 +23,15 @@ def _provider_eta_and_amount(payload: BookingCreate, db: Session) -> tuple[int, 
         doctor = db.get(Doctor, payload.provider_id)
         if not doctor:
             raise HTTPException(status_code=404, detail="Doctor not found")
-        return max(180, doctor.response_time_minutes * 60), float(doctor.consultation_fee)
+        eta = doctor.response_time_seconds or doctor.response_time_minutes * 60
+        return max(180, eta), float(doctor.consultation_fee)
     if ptype == "AMBULANCE":
         ambulance = db.get(Ambulance, payload.provider_id)
         if not ambulance:
             raise HTTPException(status_code=404, detail="Ambulance not found")
         amount = float(ambulance.base_price + (ambulance.cost_per_km * payload.distance_km))
-        return max(180, ambulance.response_time_minutes * 60), amount
+        eta = ambulance.response_time_seconds or ambulance.response_time_minutes * 60
+        return max(180, eta), amount
     raise HTTPException(status_code=400, detail="provider_type must be doctor or ambulance")
 
 

@@ -87,7 +87,7 @@ export function AmbulancesPage() {
   return (
     <section>
       <h2 className="text-3xl font-extrabold">AI Ranked Ambulances</h2>
-      <div className="mt-4 grid gap-3 rounded-2xl bg-white p-4 shadow-premium sm:grid-cols-4">
+      <div className="mt-4 grid gap-3 rounded-2xl bg-surface p-4 shadow-premium sm:grid-cols-4">
         <input list="amb-city-options" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className="rounded-lg border px-3 py-2" />
         <datalist id="amb-city-options">{meta.cities.map((c) => <option key={c} value={c} />)}</datalist>
 

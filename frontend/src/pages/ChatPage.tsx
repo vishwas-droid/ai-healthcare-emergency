@@ -62,7 +62,7 @@ export function ChatPage() {
   return (
     <section>
       <h2 className="text-3xl font-extrabold">Doctor Chat</h2>
-      <div className="mt-4 rounded-2xl bg-white p-4 shadow-premium">
+      <div className="mt-4 rounded-2xl bg-surface p-4 shadow-premium">
         <div className="h-96 space-y-2 overflow-auto rounded-xl border p-3">
           {messages.map((m, i) => (
             <div

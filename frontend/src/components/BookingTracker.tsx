@@ -14,7 +14,7 @@ export function BookingTracker({ data }: Props) {
   if (!data) return null;
 
   return (
-    <div className="rounded-2xl border bg-white p-4 shadow-premium">
+    <div className="rounded-2xl border bg-surface p-4 shadow-premium">
       <p className="text-lg font-bold">Live Booking Tracker #{data.booking_id}</p>
       <p className="text-sm text-slate-600">Status: {data.booking_status} | ETA: {fmt(data.eta_seconds)}</p>
       <div className="mt-3 h-2 rounded-full bg-slate-200">

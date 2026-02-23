@@ -14,10 +14,16 @@ export type Doctor = {
   consultation_fee: number;
   total_patients_served: number;
   response_time_minutes: number;
+  response_time_seconds: number;
   verified_status: boolean;
   availability_status: string;
+  is_available: boolean;
   languages: string;
   whatsapp_link: string;
   phone_number: string;
   ai_score: number;
+  rating_count: number;
+  success_rate: number;
+  latitude: number;
+  longitude: number;
 };

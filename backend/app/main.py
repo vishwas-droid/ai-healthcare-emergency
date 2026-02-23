@@ -1,7 +1,24 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import ambulances, analytics, bookings, chat, compare, doctors, meta, recommendation, tracking
+from app.api import (
+    admin,
+    ambulances,
+    analytics,
+    auth,
+    bookings,
+    chat,
+    compare,
+    dispatch,
+    doctors,
+    feedback,
+    hospitals,
+    meta,
+    ranking,
+    recommendation,
+    tracking,
+    triage,
+)
 from app.core.config import settings
 from app.db.models import Base
 from app.db.seed import seed_if_empty
@@ -36,3 +53,10 @@ app.include_router(recommendation.router)
 app.include_router(tracking.router)
 app.include_router(meta.router)
 app.include_router(bookings.router)
+app.include_router(triage.router)
+app.include_router(ranking.router)
+app.include_router(dispatch.router)
+app.include_router(hospitals.router)
+app.include_router(feedback.router)
+app.include_router(auth.router)
+app.include_router(admin.router)

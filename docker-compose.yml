@@ -1,21 +1,62 @@
 version: "3.9"
 services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: healthcare
+      POSTGRES_USER: healthcare
+      POSTGRES_PASSWORD: healthcare
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  ai-service:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./ai-service:/app
+    command: sh -c "pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8010"
+    ports:
+      - "8010:8010"
+
   backend:
     image: python:3.11-slim
     working_dir: /app
     volumes:
       - ./backend:/app
+    environment:
+      DATABASE_URL: postgresql://healthcare:healthcare@db:5432/healthcare
+      AI_SERVICE_URL: http://ai-service:8010
+      ENABLE_LLM_TRIAGE: "true"
+      JWT_SECRET: change_me_now
+      ENCRYPTION_KEY: ""
     command: sh -c "pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     ports:
       - "8000:8000"
+    depends_on:
+      - db
+      - redis
+      - ai-service
 
   frontend:
     image: node:20-alpine
     working_dir: /app
     volumes:
       - ./frontend:/app
+    environment:
+      VITE_API_URL: http://localhost:8000
+      VITE_WS_URL: ws://localhost:8000
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
     ports:
       - "5173:5173"
     depends_on:
       - backend
+
+volumes:
+  pgdata:

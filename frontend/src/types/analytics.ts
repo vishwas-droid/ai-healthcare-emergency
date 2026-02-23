@@ -5,3 +5,10 @@ export type Analytics = {
   demand_category_analysis: { category: string; demand_count: number }[];
   demand_by_city: { city: string; demand_count: number }[];
 };
+
+export type AnalyticsForecast = {
+  peak_hours: { hour: number; score: number }[];
+  cardiac_spike_probability: { hour: number; probability: number }[];
+  demand_forecast: { hour: number; forecast: number }[];
+  high_risk_zones: { zone: string; risk: number }[];
+};

@@ -29,3 +29,12 @@ export type TrackingStatusResponse = {
     lng: number;
   };
 };
+
+export type TrackingRealtimeUpdate = {
+  tracking_id: number;
+  status: string;
+  eta_seconds: number;
+  progress_percent: number;
+  location: { lat: number; lng: number };
+  updated_at: string;
+};

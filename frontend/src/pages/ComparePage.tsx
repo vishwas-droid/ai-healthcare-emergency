@@ -47,7 +47,7 @@ export function ComparePage() {
   return (
     <section>
       <h2 className="text-3xl font-extrabold">Comparison Engine</h2>
-      <div className="mt-4 grid gap-3 rounded-2xl bg-white p-4 shadow-premium sm:grid-cols-5">
+      <div className="mt-4 grid gap-3 rounded-2xl bg-surface p-4 shadow-premium sm:grid-cols-5">
         <select value={entityType} onChange={(e) => setEntityType(e.target.value)} className="rounded-lg border px-3 py-2">
           <option value="doctor">Doctors</option>
           <option value="ambulance">Ambulances</option>
@@ -64,7 +64,7 @@ export function ComparePage() {
         Compare Now
       </button>
       {result && (
-        <div className="mt-6 rounded-2xl bg-white p-5 shadow-premium">
+        <div className="mt-6 rounded-2xl bg-surface p-5 shadow-premium">
           <p className="text-lg font-bold">Best Choice: {result.winner_name}</p>
           <p className="text-sm">AI Score: {result.score}</p>
           <p className="mt-2 text-slate-700">{result.reason}</p>

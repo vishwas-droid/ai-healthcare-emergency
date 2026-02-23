@@ -1,6 +1,7 @@
 from datetime import datetime
+import asyncio
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 
 from app.db.models import Ambulance, Doctor, TrackingSession
@@ -9,7 +10,8 @@ from app.db.schemas import (
     TrackingStartResponse,
     TrackingStatusResponse,
 )
-from app.db.session import get_db
+from app.db.session import get_db, SessionLocal
+from app.services.websocket_manager import TrackingConnectionManager
 
 router = APIRouter(prefix="", tags=["Tracking"])
 
@@ -17,7 +19,11 @@ CITY_BASE_COORDS = {
     "mumbai": {"lat": 19.0760, "lng": 72.8777},
     "delhi": {"lat": 28.6139, "lng": 77.2090},
     "bengaluru": {"lat": 12.9716, "lng": 77.5946},
+    "hyderabad": {"lat": 17.3850, "lng": 78.4867},
+    "chennai": {"lat": 13.0827, "lng": 80.2707},
 }
+
+manager = TrackingConnectionManager()
 
 
 def _base_eta_seconds(provider_type: str, provider_id: int, db: Session) -> int:
@@ -26,15 +32,35 @@ def _base_eta_seconds(provider_type: str, provider_id: int, db: Session) -> int:
         doctor = db.get(Doctor, provider_id)
         if not doctor:
             raise HTTPException(status_code=404, detail="Doctor not found")
-        return max(180, doctor.response_time_minutes * 60)
+        return max(180, doctor.response_time_seconds or doctor.response_time_minutes * 60)
 
     if p == "AMBULANCE":
         ambulance = db.get(Ambulance, provider_id)
         if not ambulance:
             raise HTTPException(status_code=404, detail="Ambulance not found")
-        return max(180, ambulance.response_time_minutes * 60)
+        return max(180, ambulance.response_time_seconds or ambulance.response_time_minutes * 60)
 
-    raise HTTPException(status_code=400, detail="provider_type must be doctor or ambulance")
+    return 420
+
+
+def _build_status(session: TrackingSession) -> TrackingStatusResponse:
+    elapsed = int((datetime.utcnow() - session.started_at).total_seconds())
+    remaining = max(0, session.eta_seconds_initial - elapsed)
+    progress = round(100 * (1 - (remaining / session.eta_seconds_initial)), 2) if session.eta_seconds_initial else 100.0
+
+    base = CITY_BASE_COORDS.get(session.city.strip().lower(), {"lat": 20.5937, "lng": 78.9629})
+    simulated = {
+        "lat": round(base["lat"] + (0.02 * (1 - progress / 100)), 6),
+        "lng": round(base["lng"] + (0.02 * (1 - progress / 100)), 6),
+    }
+
+    return TrackingStatusResponse(
+        tracking_id=session.id,
+        status=session.status,
+        eta_seconds=remaining,
+        progress_percent=progress,
+        simulated_location=simulated,
+    )
 
 
 @router.post("/tracking/start", response_model=TrackingStartResponse)
@@ -65,25 +91,36 @@ def get_tracking_status(tracking_id: int, db: Session = Depends(get_db)):
     if not session:
         raise HTTPException(status_code=404, detail="Tracking session not found")
 
-    elapsed = int((datetime.utcnow() - session.started_at).total_seconds())
-    remaining = max(0, session.eta_seconds_initial - elapsed)
-    progress = round(100 * (1 - (remaining / session.eta_seconds_initial)), 2)
-
-    if remaining == 0 and session.status != "ARRIVED":
+    status = _build_status(session)
+    if status.eta_seconds == 0 and session.status != "ARRIVED":
         session.status = "ARRIVED"
         db.add(session)
         db.commit()
+        status.status = session.status
 
-    base = CITY_BASE_COORDS.get(session.city.strip().lower(), {"lat": 20.5937, "lng": 78.9629})
-    simulated = {
-        "lat": round(base["lat"] + (0.02 * (1 - progress / 100)), 6),
-        "lng": round(base["lng"] + (0.02 * (1 - progress / 100)), 6),
-    }
+    return status
 
-    return TrackingStatusResponse(
-        tracking_id=session.id,
-        status=session.status,
-        eta_seconds=remaining,
-        progress_percent=progress,
-        simulated_location=simulated,
-    )
+
+@router.websocket("/tracking/ws/{tracking_id}")
+async def tracking_socket(websocket: WebSocket, tracking_id: int):
+    await manager.connect(tracking_id, websocket)
+    db = SessionLocal()
+    try:
+        while True:
+            session = db.get(TrackingSession, tracking_id)
+            if not session:
+                await websocket.send_json({"error": "Tracking session not found"})
+                manager.disconnect(tracking_id, websocket)
+                break
+            status = _build_status(session)
+            if status.eta_seconds == 0 and session.status != "ARRIVED":
+                session.status = "ARRIVED"
+                db.add(session)
+                db.commit()
+                status.status = session.status
+            await manager.broadcast(tracking_id, status.model_dump())
+            await asyncio.sleep(2)
+    except WebSocketDisconnect:
+        manager.disconnect(tracking_id, websocket)
+    finally:
+        db.close()
