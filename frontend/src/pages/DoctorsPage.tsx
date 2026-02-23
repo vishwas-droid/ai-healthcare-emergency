@@ -26,8 +26,10 @@ export function DoctorsPage() {
   const [meta, setMeta] = useState<MetaOptions>(defaultMeta);
 
   const createBooking = async (payload: BookingPayload) => {
-    await apiClient.post("/bookings", payload);
-    window.alert(`Appointment booked for doctor #${payload.provider_id}`);
+    const method = (window.prompt("Payment method: COD / UPI / RAZORPAY", "COD") || "COD").toUpperCase();
+    const upiId = method === "UPI" ? window.prompt("Enter UPI ID", "name@upi") || "" : "";
+    const { data } = await apiClient.post("/bookings", { ...payload, payment_method: method, upi_id: upiId });
+    window.alert(`Appointment booked. Booking ID: ${data.booking.id}`);
   };
 
   const pollTracking = (trackingId: number) => {

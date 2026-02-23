@@ -115,3 +115,16 @@ class Booking(Base):
     status: Mapped[str] = mapped_column(String(20), default="CONFIRMED")
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class BookingPayment(Base):
+    __tablename__ = "booking_payments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    booking_id: Mapped[int] = mapped_column(Integer, ForeignKey("bookings.id"), index=True)
+    method: Mapped[str] = mapped_column(String(20), default="COD")  # COD / UPI / RAZORPAY
+    amount: Mapped[float] = mapped_column(Float, default=0)
+    status: Mapped[str] = mapped_column(String(20), default="PENDING")  # PENDING / PAID / COD_DUE
+    upi_id: Mapped[str] = mapped_column(String(120), default="")
+    transaction_ref: Mapped[str] = mapped_column(String(120), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

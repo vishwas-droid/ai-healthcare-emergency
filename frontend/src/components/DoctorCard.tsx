@@ -9,6 +9,8 @@ type Props = {
 };
 
 export function DoctorCard({ doctor, onTrack, onBook }: Props) {
+  const whatsappHref = doctor.whatsapp_link || "https://wa.me/919800088108";
+  const callHref = doctor.phone_number ? `tel:${doctor.phone_number}` : "tel:+919800088108";
   return (
     <article className="rounded-2xl bg-white p-5 shadow-premium">
       <div className="flex items-start gap-4">
@@ -45,9 +47,10 @@ export function DoctorCard({ doctor, onTrack, onBook }: Props) {
         <Link to={`/chat/${doctor.id}`} className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white">
           Chat Now
         </Link>
-        <a href={doctor.whatsapp_link} target="_blank" className="rounded-lg bg-green-600 px-3 py-2 text-sm text-white" rel="noreferrer">
+        <a href={whatsappHref} target="_blank" className="rounded-lg bg-green-600 px-3 py-2 text-sm text-white" rel="noreferrer">
           WhatsApp Direct
         </a>
+        <a href={callHref} className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white">Call</a>
         <button onClick={() => onBook?.(doctor)} className="rounded-lg bg-primary px-3 py-2 text-sm text-white">
           Book Appointment
         </button>

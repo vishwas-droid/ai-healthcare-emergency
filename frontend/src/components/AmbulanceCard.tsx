@@ -8,6 +8,8 @@ type Props = {
 };
 
 export function AmbulanceCard({ ambulance, distanceKm = 8, onTrack, onBook }: Props) {
+  const whatsappHref = ambulance.whatsapp_link || "https://wa.me/919800088108";
+  const callHref = ambulance.phone_number ? `tel:${ambulance.phone_number}` : "tel:+919800088108";
   const estimatedTotalCost = ambulance.base_price + ambulance.cost_per_km * distanceKm;
   const tags = [
     ambulance.cost_per_km <= 25 ? "Budget Friendly" : "Premium",
@@ -54,10 +56,10 @@ export function AmbulanceCard({ ambulance, distanceKm = 8, onTrack, onBook }: Pr
             Track Ambulance
           </button>
         )}
-        <a href={`tel:${ambulance.phone_number}`} className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white">
+        <a href={callHref} className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-white">
           Call Now
         </a>
-        <a href={ambulance.whatsapp_link} target="_blank" className="rounded-lg bg-green-600 px-3 py-2 text-sm text-white" rel="noreferrer">
+        <a href={whatsappHref} target="_blank" className="rounded-lg bg-green-600 px-3 py-2 text-sm text-white" rel="noreferrer">
           WhatsApp
         </a>
       </div>

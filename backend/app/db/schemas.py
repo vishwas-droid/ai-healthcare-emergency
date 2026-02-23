@@ -166,6 +166,9 @@ class BookingCreate(BaseModel):
     user_name: str = "Guest"
     user_phone: str = ""
     notes: str = ""
+    payment_method: str = "COD"  # COD / UPI / RAZORPAY
+    upi_id: str = ""
+    distance_km: float = 8.0
 
 
 class BookingOut(BaseModel):
@@ -181,3 +184,23 @@ class BookingOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class BookingCheckoutResponse(BaseModel):
+    booking: BookingOut
+    tracking_id: int
+    eta_seconds: int
+    payment_method: str
+    payment_status: str
+    payment_amount: float
+    razorpay_checkout_url: str = ""
+
+
+class BookingTrackingResponse(BaseModel):
+    booking_id: int
+    booking_status: str
+    tracking_id: int
+    eta_seconds: int
+    progress_percent: float
+    timeline: list[dict]
+    simulated_location: dict

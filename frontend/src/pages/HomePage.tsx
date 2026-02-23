@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { AmbulanceCard } from "../components/AmbulanceCard";
+import { BookingTracker } from "../components/BookingTracker";
 import { DoctorCard } from "../components/DoctorCard";
 import { TrackingPanel } from "../components/TrackingPanel";
 import { apiClient } from "../lib/apiClient";
 import type { Ambulance } from "../types/ambulance";
-import type { BookingPayload } from "../types/booking";
+import type { BookingCheckoutResponse, BookingPayload, BookingTrackingResponse } from "../types/booking";
 import type { Doctor } from "../types/doctor";
 import type { MetaOptions } from "../types/meta";
 import type { RecommendResponse, TrackingStartResponse, TrackingStatusResponse } from "../types/recommendation";
@@ -28,6 +29,8 @@ export function HomePage() {
   const [recommendation, setRecommendation] = useState<RecommendResponse | null>(null);
   const [tracking, setTracking] = useState<TrackingStatusResponse | null>(null);
   const [activeTrackingId, setActiveTrackingId] = useState<number | null>(null);
+  const [activeBookingId, setActiveBookingId] = useState<number | null>(null);
+  const [bookingTrack, setBookingTrack] = useState<BookingTrackingResponse | null>(null);
   const [meta, setMeta] = useState<MetaOptions>(defaultMeta);
 
   useEffect(() => {
@@ -35,8 +38,20 @@ export function HomePage() {
   }, []);
 
   const createBooking = async (payload: BookingPayload) => {
-    await apiClient.post("/bookings", payload);
-    window.alert(`Booking confirmed for ${payload.provider_type.toUpperCase()} #${payload.provider_id}`);
+    const method = (window.prompt("Payment method: COD / UPI / RAZORPAY", "COD") || "COD").toUpperCase();
+    const upiId = method === "UPI" ? window.prompt("Enter UPI ID", "name@upi") || "" : "";
+    const checkoutPayload = {
+      ...payload,
+      payment_method: method,
+      upi_id: upiId,
+      distance_km: payload.distance_km ?? 8,
+    };
+    const { data } = await apiClient.post<BookingCheckoutResponse>("/bookings", checkoutPayload);
+    setActiveBookingId(data.booking.id);
+    if (data.payment_method === "RAZORPAY" && data.razorpay_checkout_url) {
+      window.open(data.razorpay_checkout_url, "_blank", "noopener,noreferrer");
+    }
+    window.alert(`Booking confirmed (#${data.booking.id}) | Payment: ${data.payment_method} | Amount: INR ${Math.round(data.payment_amount)}`);
   };
 
   const runRecommendation = async () => {
@@ -69,6 +84,16 @@ export function HomePage() {
     }, 2000);
     return () => clearInterval(timer);
   }, [activeTrackingId]);
+
+  useEffect(() => {
+    if (!activeBookingId) return;
+    const timer = setInterval(async () => {
+      const { data } = await apiClient.get<BookingTrackingResponse>(`/bookings/${activeBookingId}/track`);
+      setBookingTrack(data);
+      if (data.booking_status === "COMPLETED") clearInterval(timer);
+    }, 2500);
+    return () => clearInterval(timer);
+  }, [activeBookingId]);
 
   return (
     <div className="space-y-14">
@@ -122,6 +147,7 @@ export function HomePage() {
             </div>
 
             <TrackingPanel status={tracking} />
+            <BookingTracker data={bookingTrack} />
 
             {recommendation.doctors.length > 0 && (
               <div>
@@ -167,6 +193,24 @@ export function HomePage() {
               <p className="mt-2 text-lg font-semibold">{s}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section>
+        <h3 className="text-2xl font-bold">Blogs & Insights</h3>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <a href="https://www.redcross.org/take-a-class/cpr" target="_blank" rel="noreferrer" className="overflow-hidden rounded-2xl bg-white shadow-premium">
+            <img src="https://images.unsplash.com/photo-1584515933487-779824d29309?w=1200" alt="CPR guide" className="h-44 w-full object-cover" />
+            <div className="p-4"><p className="font-semibold">CPR Guide for Emergencies</p><p className="text-sm text-slate-600">Learn step-by-step CPR actions.</p></div>
+          </a>
+          <a href="https://www.who.int/news-room/fact-sheets/detail/road-traffic-injuries" target="_blank" rel="noreferrer" className="overflow-hidden rounded-2xl bg-white shadow-premium">
+            <img src="https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?w=1200" alt="Road safety" className="h-44 w-full object-cover" />
+            <div className="p-4"><p className="font-semibold">Road Trauma Response Tips</p><p className="text-sm text-slate-600">Critical first-response actions.</p></div>
+          </a>
+          <a href="https://www.cdc.gov/heart-disease/signs-symptoms/index.html" target="_blank" rel="noreferrer" className="overflow-hidden rounded-2xl bg-white shadow-premium">
+            <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200" alt="Heart emergency" className="h-44 w-full object-cover" />
+            <div className="p-4"><p className="font-semibold">Heart Attack Early Signs</p><p className="text-sm text-slate-600">Recognize symptoms and act fast.</p></div>
+          </a>
         </div>
       </section>
     </div>
