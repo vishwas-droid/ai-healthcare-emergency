@@ -5,9 +5,10 @@ import type { Doctor } from "../types/doctor";
 type Props = {
   doctor: Doctor;
   onTrack?: (doctor: Doctor) => void;
+  onBook?: (doctor: Doctor) => void;
 };
 
-export function DoctorCard({ doctor, onTrack }: Props) {
+export function DoctorCard({ doctor, onTrack, onBook }: Props) {
   return (
     <article className="rounded-2xl bg-white p-5 shadow-premium">
       <div className="flex items-start gap-4">
@@ -47,7 +48,9 @@ export function DoctorCard({ doctor, onTrack }: Props) {
         <a href={doctor.whatsapp_link} target="_blank" className="rounded-lg bg-green-600 px-3 py-2 text-sm text-white" rel="noreferrer">
           WhatsApp Direct
         </a>
-        <button className="rounded-lg bg-primary px-3 py-2 text-sm text-white">Book Appointment</button>
+        <button onClick={() => onBook?.(doctor)} className="rounded-lg bg-primary px-3 py-2 text-sm text-white">
+          Book Appointment
+        </button>
         {onTrack && (
           <button onClick={() => onTrack(doctor)} className="rounded-lg border border-primary px-3 py-2 text-sm text-primary">
             Track Doctor

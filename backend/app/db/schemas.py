@@ -148,3 +148,36 @@ class TrackingStatusResponse(BaseModel):
     eta_seconds: int
     progress_percent: float
     simulated_location: dict
+
+
+class MetaOptionsResponse(BaseModel):
+    cities: list[str]
+    countries: list[str]
+    doctor_categories: list[str]
+    ambulance_types: list[str]
+    problem_suggestions: list[str]
+    budget_suggestions: list[int]
+
+
+class BookingCreate(BaseModel):
+    provider_type: str
+    provider_id: int
+    city: str
+    user_name: str = "Guest"
+    user_phone: str = ""
+    notes: str = ""
+
+
+class BookingOut(BaseModel):
+    id: int
+    provider_type: str
+    provider_id: int
+    user_name: str
+    user_phone: str
+    city: str
+    status: str
+    notes: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

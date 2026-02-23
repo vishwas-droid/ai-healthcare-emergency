@@ -101,3 +101,17 @@ class TrackingSession(Base):
     eta_seconds_initial: Mapped[int] = mapped_column(Integer)
     started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     status: Mapped[str] = mapped_column(String(20), default="EN_ROUTE")
+
+
+class Booking(Base):
+    __tablename__ = "bookings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    provider_type: Mapped[str] = mapped_column(String(20), index=True)  # DOCTOR / AMBULANCE
+    provider_id: Mapped[int] = mapped_column(Integer, index=True)
+    user_name: Mapped[str] = mapped_column(String(120), default="Guest")
+    user_phone: Mapped[str] = mapped_column(String(30), default="")
+    city: Mapped[str] = mapped_column(String(80), index=True)
+    status: Mapped[str] = mapped_column(String(20), default="CONFIRMED")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

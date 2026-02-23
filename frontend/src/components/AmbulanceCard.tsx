@@ -4,9 +4,10 @@ type Props = {
   ambulance: Ambulance;
   distanceKm?: number;
   onTrack?: (ambulance: Ambulance) => void;
+  onBook?: (ambulance: Ambulance) => void;
 };
 
-export function AmbulanceCard({ ambulance, distanceKm = 8, onTrack }: Props) {
+export function AmbulanceCard({ ambulance, distanceKm = 8, onTrack, onBook }: Props) {
   const estimatedTotalCost = ambulance.base_price + ambulance.cost_per_km * distanceKm;
   const tags = [
     ambulance.cost_per_km <= 25 ? "Budget Friendly" : "Premium",
@@ -45,7 +46,9 @@ export function AmbulanceCard({ ambulance, distanceKm = 8, onTrack }: Props) {
         ))}
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        <button className="rounded-lg bg-primary px-3 py-2 text-sm text-white">Book Now</button>
+        <button onClick={() => onBook?.(ambulance)} className="rounded-lg bg-primary px-3 py-2 text-sm text-white">
+          Book Now
+        </button>
         {onTrack && (
           <button onClick={() => onTrack(ambulance)} className="rounded-lg border px-3 py-2 text-sm">
             Track Ambulance

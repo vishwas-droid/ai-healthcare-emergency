@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import ambulances, analytics, chat, compare, doctors, recommendation, tracking
+from app.api import ambulances, analytics, bookings, chat, compare, doctors, meta, recommendation, tracking
 from app.core.config import settings
 from app.db.models import Base
 from app.db.seed import seed_if_empty
@@ -34,3 +34,5 @@ app.include_router(analytics.router)
 app.include_router(chat.router)
 app.include_router(recommendation.router)
 app.include_router(tracking.router)
+app.include_router(meta.router)
+app.include_router(bookings.router)

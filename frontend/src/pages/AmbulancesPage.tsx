@@ -4,7 +4,18 @@ import { AmbulanceCard } from "../components/AmbulanceCard";
 import { TrackingPanel } from "../components/TrackingPanel";
 import { apiClient } from "../lib/apiClient";
 import type { Ambulance } from "../types/ambulance";
+import type { BookingPayload } from "../types/booking";
+import type { MetaOptions } from "../types/meta";
 import type { TrackingStartResponse, TrackingStatusResponse } from "../types/recommendation";
+
+const defaultMeta: MetaOptions = {
+  cities: [],
+  countries: [],
+  doctor_categories: [],
+  ambulance_types: ["BLS", "ALS", "ICU", "Ventilator", "Neonatal"],
+  problem_suggestions: [],
+  budget_suggestions: [1000, 2000, 3000, 5000, 8000],
+};
 
 export function AmbulancesPage() {
   const [ambulances, setAmbulances] = useState<Ambulance[]>([]);
@@ -12,6 +23,12 @@ export function AmbulancesPage() {
   const [vehicleType, setVehicleType] = useState("ICU");
   const [distanceKm, setDistanceKm] = useState("8");
   const [tracking, setTracking] = useState<TrackingStatusResponse | null>(null);
+  const [meta, setMeta] = useState<MetaOptions>(defaultMeta);
+
+  const createBooking = async (payload: BookingPayload) => {
+    await apiClient.post("/bookings", payload);
+    window.alert(`Ambulance booked #${payload.provider_id}`);
+  };
 
   const pollTracking = (trackingId: number) => {
     const timer = setInterval(async () => {
@@ -35,6 +52,7 @@ export function AmbulancesPage() {
       params: {
         city: city || undefined,
         vehicle_type: vehicleType || undefined,
+        limit: 80,
       },
     });
     setAmbulances(data);
@@ -42,22 +60,23 @@ export function AmbulancesPage() {
 
   useEffect(() => {
     load();
+    apiClient.get<MetaOptions>("/meta/options").then((res) => setMeta(res.data)).catch(() => setMeta(defaultMeta));
   }, []);
 
   return (
     <section>
       <h2 className="text-3xl font-extrabold">AI Ranked Ambulances</h2>
       <div className="mt-4 grid gap-3 rounded-2xl bg-white p-4 shadow-premium sm:grid-cols-4">
-        <input placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className="rounded-lg border px-3 py-2" />
-        <input placeholder="Vehicle Type" value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} className="rounded-lg border px-3 py-2" />
+        <input list="amb-city-options" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className="rounded-lg border px-3 py-2" />
+        <datalist id="amb-city-options">{meta.cities.map((c) => <option key={c} value={c} />)}</datalist>
+
+        <input list="amb-type-options" placeholder="Vehicle Type" value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} className="rounded-lg border px-3 py-2" />
+        <datalist id="amb-type-options">{meta.ambulance_types.map((t) => <option key={t} value={t} />)}</datalist>
+
         <input placeholder="Distance KM" value={distanceKm} onChange={(e) => setDistanceKm(e.target.value)} className="rounded-lg border px-3 py-2" />
-        <button onClick={load} className="rounded-lg bg-primary px-4 py-2 font-semibold text-white">
-          Apply Filters
-        </button>
+        <button onClick={load} className="rounded-lg bg-primary px-4 py-2 font-semibold text-white">Apply Filters</button>
       </div>
-      <div className="mt-4">
-        <TrackingPanel status={tracking} />
-      </div>
+      <div className="mt-4"><TrackingPanel status={tracking} /></div>
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         {ambulances.map((ambulance) => (
           <AmbulanceCard
@@ -65,6 +84,7 @@ export function AmbulancesPage() {
             ambulance={ambulance}
             distanceKm={Number(distanceKm) || 8}
             onTrack={startAmbulanceTracking}
+            onBook={() => createBooking({ provider_type: "ambulance", provider_id: ambulance.id, city: ambulance.city })}
           />
         ))}
       </div>
