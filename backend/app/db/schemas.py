@@ -233,7 +233,7 @@ class AuthRegisterRequest(BaseModel):
     email: str
     phone: str | None = None
     password: str = Field(min_length=6)
-    role: str = \"PATIENT\"
+    role: str = "PATIENT"
 
 
 class AuthLoginRequest(BaseModel):
@@ -243,7 +243,7 @@ class AuthLoginRequest(BaseModel):
 
 class AuthResponse(BaseModel):
     access_token: str
-    token_type: str = \"bearer\"
+    token_type: str = "bearer"
     user: UserOut
 
 
