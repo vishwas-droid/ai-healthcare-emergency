@@ -1,0 +1,23 @@
+export type Doctor = {
+  id: number;
+  name: string;
+  photo_url: string;
+  category: string;
+  city: string;
+  state: string;
+  country: string;
+  qualification: string;
+  college: string;
+  experience_years: number;
+  rating: number;
+  reviews_count: number;
+  consultation_fee: number;
+  total_patients_served: number;
+  response_time_minutes: number;
+  verified_status: boolean;
+  availability_status: string;
+  languages: string;
+  whatsapp_link: string;
+  phone_number: string;
+  ai_score: number;
+};
