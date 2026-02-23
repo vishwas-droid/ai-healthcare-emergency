@@ -38,7 +38,9 @@ export function HomePage() {
   }, []);
 
   const createBooking = async (payload: BookingPayload) => {
-    const method = (window.prompt("Payment method: COD / UPI / RAZORPAY", "COD") || "COD").toUpperCase();
+    const methodInput = (window.prompt("Payment method: COD / UPI / RAZORPAY", "COD") || "COD").toUpperCase();
+    const method: "COD" | "UPI" | "RAZORPAY" =
+      methodInput === "UPI" || methodInput === "RAZORPAY" ? methodInput : "COD";
     const upiId = method === "UPI" ? window.prompt("Enter UPI ID", "name@upi") || "" : "";
     const checkoutPayload = {
       ...payload,

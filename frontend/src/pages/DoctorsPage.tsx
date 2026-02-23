@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 
+import { BookingTracker } from "../components/BookingTracker";
 import { DoctorCard } from "../components/DoctorCard";
 import { TrackingPanel } from "../components/TrackingPanel";
 import { apiClient } from "../lib/apiClient";
-import type { BookingPayload } from "../types/booking";
+import type { BookingCheckoutResponse, BookingPayload, BookingTrackingResponse } from "../types/booking";
 import type { Doctor } from "../types/doctor";
 import type { MetaOptions } from "../types/meta";
 import type { TrackingStartResponse, TrackingStatusResponse } from "../types/recommendation";
@@ -23,12 +24,20 @@ export function DoctorsPage() {
   const [category, setCategory] = useState("Cardiologist");
   const [maxFee, setMaxFee] = useState("1500");
   const [tracking, setTracking] = useState<TrackingStatusResponse | null>(null);
+  const [activeBookingId, setActiveBookingId] = useState<number | null>(null);
+  const [bookingTrack, setBookingTrack] = useState<BookingTrackingResponse | null>(null);
   const [meta, setMeta] = useState<MetaOptions>(defaultMeta);
 
   const createBooking = async (payload: BookingPayload) => {
-    const method = (window.prompt("Payment method: COD / UPI / RAZORPAY", "COD") || "COD").toUpperCase();
+    const methodInput = (window.prompt("Payment method: COD / UPI / RAZORPAY", "COD") || "COD").toUpperCase();
+    const method: "COD" | "UPI" | "RAZORPAY" =
+      methodInput === "UPI" || methodInput === "RAZORPAY" ? methodInput : "COD";
     const upiId = method === "UPI" ? window.prompt("Enter UPI ID", "name@upi") || "" : "";
-    const { data } = await apiClient.post("/bookings", { ...payload, payment_method: method, upi_id: upiId });
+    const { data } = await apiClient.post<BookingCheckoutResponse>("/bookings", { ...payload, payment_method: method, upi_id: upiId });
+    setActiveBookingId(data.booking.id);
+    if (data.payment_method === "RAZORPAY" && data.razorpay_checkout_url) {
+      window.open(data.razorpay_checkout_url, "_blank", "noopener,noreferrer");
+    }
     window.alert(`Appointment booked. Booking ID: ${data.booking.id}`);
   };
 
@@ -66,6 +75,16 @@ export function DoctorsPage() {
     apiClient.get<MetaOptions>("/meta/options").then((res) => setMeta(res.data)).catch(() => setMeta(defaultMeta));
   }, []);
 
+  useEffect(() => {
+    if (!activeBookingId) return;
+    const timer = setInterval(async () => {
+      const { data } = await apiClient.get<BookingTrackingResponse>(`/bookings/${activeBookingId}/track`);
+      setBookingTrack(data);
+      if (data.booking_status === "COMPLETED") clearInterval(timer);
+    }, 2500);
+    return () => clearInterval(timer);
+  }, [activeBookingId]);
+
   return (
     <section>
       <h2 className="text-3xl font-extrabold">AI Ranked Doctors</h2>
@@ -81,7 +100,10 @@ export function DoctorsPage() {
 
         <button onClick={load} className="rounded-lg bg-primary px-4 py-2 font-semibold text-white">Apply Filters</button>
       </div>
-      <div className="mt-4"><TrackingPanel status={tracking} /></div>
+      <div className="mt-4 space-y-3">
+        <TrackingPanel status={tracking} />
+        <BookingTracker data={bookingTrack} />
+      </div>
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         {doctors.map((doctor) => (
           <DoctorCard
