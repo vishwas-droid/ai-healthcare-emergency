@@ -73,6 +73,7 @@ class EmergencyRecommendRequest(BaseModel):
     budget: float = Field(ge=0)
     service_preference: str = "both"  # doctor / ambulance / both
     min_rating: float | None = Field(default=None, ge=0, le=5)
+    suggestion_count: int = Field(default=20, ge=1, le=100)
 
 
 class EmergencyRecommendResponse(BaseModel):
@@ -81,6 +82,8 @@ class EmergencyRecommendResponse(BaseModel):
     top_doctor_summary: str
     top_ambulance_summary: str
     final_recommendation: str
+    compared_doctors: int = 0
+    compared_ambulances: int = 0
 
 
 class AnalyticsResponse(BaseModel):

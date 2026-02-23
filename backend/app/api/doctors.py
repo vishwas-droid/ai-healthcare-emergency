@@ -14,8 +14,11 @@ router = APIRouter(prefix="", tags=["Doctors"])
 def get_doctors(
     city: str | None = Query(default=None),
     category: str | None = Query(default=None),
+    country: str | None = Query(default=None),
     max_fee: float | None = Query(default=None),
     min_rating: float | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=300),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
 ):
     stmt = select(Doctor)
@@ -23,17 +26,19 @@ def get_doctors(
         stmt = stmt.where(Doctor.city.ilike(f"%{city}%"))
     if category:
         stmt = stmt.where(Doctor.category.ilike(f"%{category}%"))
+    if country:
+        stmt = stmt.where(Doctor.country.ilike(f"%{country}%"))
     if max_fee is not None:
         stmt = stmt.where(Doctor.consultation_fee <= max_fee)
     if min_rating is not None:
         stmt = stmt.where(Doctor.rating >= min_rating)
 
-    doctors = db.scalars(stmt).all()
+    doctors = db.scalars(stmt.limit(5000)).all()
     ranked = score_doctors(doctors)
-    for doctor in ranked:
+    for doctor in ranked[:200]:
         db.add(doctor)
     db.commit()
-    return ranked
+    return ranked[offset : offset + limit]
 
 
 @router.get("/doctor/{doctor_id}", response_model=DoctorOut)

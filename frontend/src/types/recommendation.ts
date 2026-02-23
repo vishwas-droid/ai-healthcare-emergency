@@ -7,6 +7,8 @@ export type RecommendResponse = {
   top_doctor_summary: string;
   top_ambulance_summary: string;
   final_recommendation: string;
+  compared_doctors?: number;
+  compared_ambulances?: number;
 };
 
 export type TrackingStartResponse = {

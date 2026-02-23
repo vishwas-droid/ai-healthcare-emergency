@@ -16,20 +16,23 @@ def recommend(payload: EmergencyRecommendRequest, db: Session = Depends(get_db))
     db.add(SearchEvent(city=payload.location, problem=payload.problem, budget=payload.budget))
 
     min_rating = payload.min_rating if payload.min_rating is not None else 0.0
+    limit = payload.suggestion_count
 
-    doctor_stmt = select(Doctor).where(Doctor.rating >= min_rating)
-    ambulance_stmt = select(Ambulance)
+    doctor_stmt = select(Doctor).where(Doctor.rating >= min_rating).limit(5000)
+    ambulance_stmt = select(Ambulance).limit(5000)
 
-    doctors = score_doctors_contextual(db.scalars(doctor_stmt).all(), payload.location, payload.problem, payload.budget)
-    ambulances = score_ambulances_contextual(db.scalars(ambulance_stmt).all(), payload.location, payload.budget)
+    doctor_source = db.scalars(doctor_stmt).all()
+    ambulance_source = db.scalars(ambulance_stmt).all()
+    doctors = score_doctors_contextual(doctor_source, payload.location, payload.problem, payload.budget)
+    ambulances = score_ambulances_contextual(ambulance_source, payload.location, payload.budget)
 
     if payload.service_preference == "doctor":
         ambulances = []
     elif payload.service_preference == "ambulance":
         doctors = []
 
-    doctors = doctors[:5]
-    ambulances = ambulances[:5]
+    doctors = doctors[:limit]
+    ambulances = ambulances[:limit]
 
     for doctor in doctors:
         db.add(doctor)
@@ -46,4 +49,6 @@ def recommend(payload: EmergencyRecommendRequest, db: Session = Depends(get_db))
         top_doctor_summary=doctor_recommendation(top_doctor, payload.problem) if top_doctor else "No doctor match",
         top_ambulance_summary=ambulance_recommendation(top_ambulance, payload.budget) if top_ambulance else "No ambulance match",
         final_recommendation=final_recommendation(top_doctor, top_ambulance, payload.problem, payload.budget),
+        compared_doctors=len(doctor_source),
+        compared_ambulances=len(ambulance_source),
     )

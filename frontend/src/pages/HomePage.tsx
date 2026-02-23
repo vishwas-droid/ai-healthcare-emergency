@@ -29,6 +29,7 @@ export function HomePage() {
       budget: Number(budget),
       service_preference: servicePreference,
       min_rating: 4,
+      suggestion_count: 30,
     });
     setRecommendation(data);
   };
@@ -107,6 +108,9 @@ export function HomePage() {
             <div className="rounded-2xl bg-emerald-50 p-4">
               <p className="font-semibold text-emerald-700">Final AI Recommendation</p>
               <p className="text-sm text-slate-700">{recommendation.final_recommendation}</p>
+              <p className="mt-2 text-xs text-slate-600">
+                Compared {recommendation.compared_doctors ?? 0} doctors and {recommendation.compared_ambulances ?? 0} ambulances
+              </p>
             </div>
 
             <TrackingPanel status={tracking} />

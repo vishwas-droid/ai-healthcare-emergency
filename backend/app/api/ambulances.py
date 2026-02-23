@@ -14,6 +14,10 @@ router = APIRouter(prefix="", tags=["Ambulances"])
 def get_ambulances(
     city: str | None = Query(default=None),
     vehicle_type: str | None = Query(default=None),
+    min_rating: float | None = Query(default=None),
+    max_base_price: float | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=300),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
 ):
     stmt = select(Ambulance)
@@ -21,13 +25,17 @@ def get_ambulances(
         stmt = stmt.where(Ambulance.city.ilike(f"%{city}%"))
     if vehicle_type:
         stmt = stmt.where(Ambulance.vehicle_type.ilike(f"%{vehicle_type}%"))
+    if min_rating is not None:
+        stmt = stmt.where(Ambulance.rating >= min_rating)
+    if max_base_price is not None:
+        stmt = stmt.where(Ambulance.base_price <= max_base_price)
 
-    ambulances = db.scalars(stmt).all()
+    ambulances = db.scalars(stmt.limit(5000)).all()
     ranked = score_ambulances(ambulances)
-    for ambulance in ranked:
+    for ambulance in ranked[:200]:
         db.add(ambulance)
     db.commit()
-    return ranked
+    return ranked[offset : offset + limit]
 
 
 @router.get("/ambulance/{ambulance_id}", response_model=AmbulanceOut)
